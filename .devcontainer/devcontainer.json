@@ -1,0 +1,17 @@
+{
+  "name": "Khushi AI",
+  "image": "mcr.microsoft.com/devcontainers/python:1-3.12-bookworm",
+  "postCreateCommand": "pip install -r requirements.txt",
+  "forwardPorts": [
+    8000
+  ],
+  "portsAttributes": {
+    "8000": {
+      "label": "Khushi AI",
+      "onAutoForward": "openPreview"
+    }
+  },
+  "hostRequirements": {
+    "cpus": 4
+  }
+}
