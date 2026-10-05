@@ -9,6 +9,21 @@ into **any frontend** you like.
 
 ---
 
+## 📱 Use it on your phone (no install, no server)
+
+**Open: <https://sudhansh37.github.io/khushi-ai/>**
+
+This is the in-browser build. The model runs **on your device** with WebGPU
+(via WebLLM) — no server, no API key, nothing to install. Just open the URL,
+tap **Load model** once (~1 GB, downloaded once and cached), and chat.
+
+- Works on modern Android Chrome / Edge and iOS Safari 18+ (WebGPU required).
+- 🔎 **Research** toggle pulls context from Wikipedia + DuckDuckGo directly in
+  the browser (both allow CORS), so it works with no backend.
+- The page is served by GitHub Pages from the [`docs/`](docs/) folder.
+
+---
+
 ## Why it's free to run
 
 - **Model:** a small quantized GGUF model (default ~1 GB) that runs on plain CPU via `llama.cpp`.
