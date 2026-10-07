@@ -196,6 +196,43 @@ khushi-ai/
 - Web research depends on DuckDuckGo being reachable; if it's blocked, the bot still
   answers from general knowledge.
 
+## 🤖 Using Khushi as a research tool for your own agent
+
+Use the **server** version (not the in-browser one) for agents. Deploy it on any
+cloud host and your agent gets two useful endpoints:
+
+**Research only** — no LLM reply, just retrieval + a ready context block:
+
+```bash
+curl -X POST https://your-host/research \
+  -H "Content-Type: application/json" \
+  -d '{"query":"latest ISRO missions","max_results":5}'
+```
+
+```json
+{ "query": "…",
+  "results":  [{"title":"…","url":"…","snippet":"…"}],
+  "sources":  [{"title":"…","url":"…"}],
+  "context":  "[1] … — …\n…" }
+```
+
+**Full answer with research baked in** — OpenAI-compatible, so most agent
+frameworks can call it as a normal model:
+
+```python
+from openai import OpenAI
+client = OpenAI(base_url="https://your-host/v1", api_key="not-needed")
+```
+
+Notes for cloud use:
+
+- GitHub Pages **cannot** host the server (it is static only). Use Render,
+  Railway, Fly.io, Hugging Face Spaces or a VPS — anything that runs a
+  long-lived process.
+- DuckDuckGo can rate-limit datacenter IPs, so research falls back to the
+  Wikipedia API automatically. Swap in a proper search backend in
+  `app/search.py` if you need more.
+
 ## License
 
 MIT — see [LICENSE](LICENSE). Built on the shoulders of `llama.cpp`, `llama-cpp-python`,

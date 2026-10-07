@@ -1,5 +1,9 @@
-"""Free web research — DuckDuckGo, no API key required."""
+"""Free web research — DuckDuckGo + Wikipedia fallback. No API key required."""
 import asyncio
+import json
+import re
+import urllib.parse
+import urllib.request
 
 
 def _ddgs_search(query, max_results):
@@ -22,12 +26,51 @@ def _ddgs_search(query, max_results):
     return results
 
 
-async def web_search(query, max_results=5):
-    """Run a DuckDuckGo search off the event loop and return a list of dicts."""
+def _wikipedia_search(query, max_results=3):
+    """Key-free Wikipedia lookup — reliable from cloud / datacenter IPs."""
+    out = []
     try:
-        return await asyncio.to_thread(_ddgs_search, query, max_results)
+        qs = urllib.parse.urlencode(
+            {
+                "action": "query",
+                "list": "search",
+                "srsearch": query,
+                "format": "json",
+                "srlimit": str(max_results),
+            }
+        )
+        req = urllib.request.Request(
+            f"https://en.wikipedia.org/w/api.php?{qs}",
+            headers={"User-Agent": "KhushiAI/1.0 (open-source chatbot)"},
+        )
+        with urllib.request.urlopen(req, timeout=10) as r:
+            data = json.load(r)
+        for hit in data.get("query", {}).get("search", []):
+            title = hit.get("title", "")
+            snippet = re.sub(r"<[^>]+>", "", hit.get("snippet", ""))
+            out.append(
+                {
+                    "title": f"Wikipedia: {title}",
+                    "url": "https://en.wikipedia.org/wiki/"
+                    + urllib.parse.quote(title.replace(" ", "_")),
+                    "snippet": snippet,
+                }
+            )
     except Exception:
-        return []
+        pass
+    return out
+
+
+async def web_search(query, max_results=5):
+    """DuckDuckGo first; fall back to Wikipedia if DDG is empty or blocked."""
+    results = []
+    try:
+        results = await asyncio.to_thread(_ddgs_search, query, max_results)
+    except Exception:
+        results = []
+    if not results:
+        results = await asyncio.to_thread(_wikipedia_search, query, max_results)
+    return results
 
 
 def format_context(results):

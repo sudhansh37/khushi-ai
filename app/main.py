@@ -7,6 +7,7 @@ Exposes:
   POST /chat/stream          -> streamed plain-text reply            (for the UI)
   POST /v1/chat/completions  -> OpenAI-compatible endpoint (any frontend)
   GET  /v1/models            -> OpenAI-compatible model list
+  POST /research             -> standalone research tool (sources + context), for agents
 """
 import os
 import time
@@ -67,6 +68,11 @@ class OpenAIChatRequest(BaseModel):
     temperature: float | None = None
     max_tokens: int | None = None
     stream: bool = False
+
+
+class ResearchRequest(BaseModel):
+    query: str
+    max_results: int | None = None
 
 
 # ------------------------------ helpers ------------------------------------
@@ -160,6 +166,24 @@ async def openai_chat(req: OpenAIChatRequest):
             {"index": 0, "message": {"role": "assistant", "content": reply}, "finish_reason": "stop"}
         ],
         "sources": sources,
+    }
+
+
+@app.post("/research")
+async def research(req: ResearchRequest):
+    """Standalone research tool for agents.
+
+    Returns raw sources + a ready-to-paste context block. No LLM call is made,
+    so an external agent can use this purely as a retrieval step.
+    """
+    k = req.max_results or config.WEB_MAX_RESULTS
+    results = await web_search(req.query, k)
+    sources = [{"title": r["title"], "url": r["url"]} for r in results]
+    return {
+        "query": req.query,
+        "results": results,
+        "sources": sources,
+        "context": format_context(results),
     }
 
 
